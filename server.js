@@ -12,6 +12,8 @@ app.use(bodyParser.json());
 app.use('/tasks', tasksRouter);
 app.use('/calendar', calendarRouter);
 
+app.options('*', cors());
+
 const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
