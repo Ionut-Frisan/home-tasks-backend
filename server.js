@@ -9,10 +9,10 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+app.options('*', cors());
+
 app.use('/tasks', tasksRouter);
 app.use('/calendar', calendarRouter);
-
-app.options('*', cors());
 
 const PORT = process.env.PORT || 8000;
 
