@@ -22,6 +22,10 @@ export const generateCalendar = asyncHandler(async (req, res, next) => {
   const count = Math.floor(period/interval);
   let calendar = [];
 
+  if(!tasks){
+    tasks = []
+  }
+
   tasks = tasks.map((task) => {
     return {...task, status: 'not started', created: new Date(), updated: new Date()}
   })
