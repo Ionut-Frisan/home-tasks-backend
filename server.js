@@ -20,5 +20,5 @@ app.use('/calendar', calendarRouter);
 const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
-  console.log('Started express server');
+  console.log(`Started express server on port: ${PORT}`);
 })

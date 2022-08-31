@@ -13,6 +13,7 @@ export const addTask = asyncHandler(async (req, res, next) => {
   let newTask = req.body.task;
   newTask['id'] = v4();
   newTask['type'] = 'default';
+  newTask['comments'] = [];
 
   db.data['tasks'].push({...newTask});
   db.write();

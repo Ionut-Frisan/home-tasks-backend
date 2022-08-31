@@ -12,11 +12,11 @@ export const generateCalendar = asyncHandler(async (req, res, next) => {
   db.read();
 
   const persons = req.body.persons;
-  const interval = req.body.interval || 3;
-  const period = req.body.period || 90;
+  const interval = req.body?.interval || 3;
+  const period = req.body?.period || 90;
   let tasks = db.data['tasks'];
   const date = req.body.startDate;
-  const startDate = new Date(date.year, date.month, date.day + 1) || new Date();
+  const startDate = new Date(date.year, date.month, date.day) || new Date();
   startDate?.setDate(startDate.getDate() - interval);
 
   const count = Math.floor(period/interval);
@@ -30,9 +30,14 @@ export const generateCalendar = asyncHandler(async (req, res, next) => {
     return {...task, status: 'not started', created: new Date(), updated: new Date()}
   })
 
-  for(let i= count; i>0; i--){
-    let intervalMultiplier = findClosestMultiplier(i, 3);
-   calendar.push({date : new Date(startDate.setDate(startDate.getDate() + interval)), person: persons[intervalMultiplier - i], id: v4(), tasks})
+  let computedPersons = []
+  for(let i=0; i <= count; i++){
+    computedPersons = [...computedPersons, ...persons]
+  }
+
+  for(let i= 0; i < count; i++){
+    // let intervalMultiplier = findClosestMultiplier(i, 3);
+   calendar.push({date : new Date(startDate.setDate(startDate.getDate() + interval)), person: computedPersons[i], id: v4(), tasks})
   }
 
   db.data['calendar'] = calendar;
@@ -57,6 +62,7 @@ export const changeTaskStatus = asyncHandler(async (req, res, next) => {
     dayToModify[0].tasks = dayToModify[0].tasks.map((task) => {
       if( task.id === taskId){
         task.status = status;
+        task.updated = new Date();
       }
       return task;
     })
@@ -88,14 +94,23 @@ export const addCommentToTask = asyncHandler(async (req, res, next) => {
     res.json(db.data['calendar']);
   }
   else res.status(400).send('not found')
-
-
 })
 
-const findClosestMultiplier = (index, interval) => {
-  let i = 1;
-  while(i*interval < index){
-    i += 1;
-  }
-  return i*interval;
-}
+export const addTaskToDay = asyncHandler(async (req, res, next) => {
+  db.read();
+  const dayId = req.params.dayId;
+  let task = req.body;
+
+  task['type'] = 'user_added'
+  task['comments'] = []
+  task['created'] = new Date();
+  task['updated'] = new Date();
+  task['status'] = 'not started';
+  task['id'] = v4();
+
+  let day = db.data['calendar'].filter((day) => day.id === dayId);
+  day[0]['tasks'] = [...day[0].tasks, task];
+
+  db.write();
+  res.json(db.data['calendar']);
+})
