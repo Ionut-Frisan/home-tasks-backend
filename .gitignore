@@ -1,2 +1,3 @@
-database.json
+database.sqlite
 .idea/
+/node_modules

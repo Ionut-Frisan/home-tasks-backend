@@ -1,19 +1,17 @@
-import express from "express";
+const express = require('express');
 
-import {
-  addCommentToTask,
-  addTaskToDay,
-  changeTaskStatus,
+const {
+  getDays,
+  getDay,
   generateCalendar,
-  getCalendar
-} from "../controllers/calendar.js";
+} = require('../controllers/calendar');
 
 const calendarRouter = express.Router();
 
-calendarRouter.route('/').post(generateCalendar).get(getCalendar);
-calendarRouter.route('/tasks/updateStatus').put(changeTaskStatus);
-calendarRouter.route('/tasks/addComment').put(addCommentToTask);
-calendarRouter.route('/day/:dayId').post(addTaskToDay);
+calendarRouter.route('/').post(generateCalendar).get(getDays);
+// calendarRouter.route('/tasks/updateStatus').put(changeTaskStatus);
+// calendarRouter.route('/tasks/addComment').put(addCommentToTask);
+// calendarRouter.route('/day/:dayId').post(addTaskToDay);
 
 
-export default calendarRouter;
+module.exports = calendarRouter;

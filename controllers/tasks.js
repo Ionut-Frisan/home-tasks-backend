@@ -1,43 +1,50 @@
-import {v4} from "uuid";
-import asyncHandler from "../middleware/asyncHandler.js";
-import db from "../db.js";
+const Task = require('../models/tasks');
+const Comment = require('../models/comment');
+const asyncHandler = require('../middleware/asyncHandler')
 
+Comment.Task = Comment.belongsTo(Task);
 
-export const getTasks = asyncHandler(async (req, res, next) => {
-  db.read();
-  const data = db.data['tasks'];
-  res.json(data);
+exports.getTasks = asyncHandler(async (req, res, next) => {
+  Task.findAll({ where: {displayInFE: true},include: Task.Comments})
+    .then((tasks) => res.send(tasks))
+    .catch((err) => res.send([]))
 })
 
-export const addTask = asyncHandler(async (req, res, next) => {
-  let newTask = req.body.task;
-  newTask['id'] = v4();
-  newTask['type'] = 'default';
-  newTask['comments'] = [];
-
-  db.data['tasks'].push({...newTask});
-  db.write();
-  res.json(db.data['tasks']);
+exports.getTask = asyncHandler(async (req, res, next) => {
+  const requestedId = req.params.id;
+  Task.findOne({where: {id: requestedId}})
+    .then((task) => res.send(task))
+    .catch(() => res.status(400).send('No task with given id'))
 })
 
-export const removeTask = asyncHandler(async (req, res, next) => {
-  const id = req.params.id;
-  db.read();
-  db.data['tasks'] = db.data['tasks'].filter((task) => task.id !== id);
-  db.write();
-  res.send('Removed successfully!')
+exports.addTask = asyncHandler(async (req, res, next) => {
+  await Task.create(req.body, {include: Task.Day});
+
+  const tasks = await Task.findAll({ where: {displayInFE: true}, include: Task.Comments}) || [];
+  res.send(tasks);
 })
 
-export const updateTask = asyncHandler(async (req, res, next) => {
-  db.read();
+exports.removeTask = asyncHandler(async (req, res, next) => {
+  const requestedId = req.params.id;
+  Task.destroy({where: {id: requestedId}})
+    .then(() => res.send('Task was removed'))
+    .catch((err) => res.status(400).send())
+})
 
-  const id = req.params.id;
-  const taskToUpdate = {...req.body.task, id};
+exports.updateTask = asyncHandler(async (req, res, next) => {
+  const requestedId = req.params.id;
+  let values = {};
+  if(req.body.name) values.name = req.body.name;
+  if(req.body.status) values.status = req.body.status;
+  console.log(values);
+  await Task.update({...values}, {where: {id: requestedId}})
 
-  db.data['tasks'] = db.data['tasks'].map((task) => {
-    return task.id === taskToUpdate.id ? taskToUpdate : task
-  });
-  db.write();
+  res.send();
+})
 
-  res.json(db.data['tasks']);
+exports.addComment = asyncHandler(async (req, res, next) => {
+  const taskId = req.body.taskId;
+  const value = req.body.comment;
+  const comment = await Comment.create({value, taskId})
+  res.send(comment);
 })

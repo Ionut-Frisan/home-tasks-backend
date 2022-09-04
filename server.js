@@ -1,12 +1,12 @@
-import express from 'express'
-import db from './db.js'
-import {initDb} from "./db.js";
-import bodyParser from "body-parser";
-import tasksRouter from './routes/tasks.js';
-import calendarRouter from './routes/calendar.js';
-import cors from 'cors';
+const express = require('express')
+const bodyParser = require('body-parser')
+const cors = require('cors');
+const sequelize = require('./database');
+const tasksRouter = require('./routes/tasks')
+const calendarRouter = require('./routes/calendar')
+const commentsRouter = require('./routes/comment')
 
-initDb();
+sequelize.sync().then(() => console.log('db is ready'));
 
 const app = express();
 app.use(cors());
@@ -16,6 +16,7 @@ app.options('*', cors());
 
 app.use('/tasks', tasksRouter);
 app.use('/calendar', calendarRouter);
+app.use('/comments', commentsRouter);
 
 const PORT = process.env.PORT || 8000;
 
