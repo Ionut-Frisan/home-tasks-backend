@@ -68,7 +68,7 @@ const getCalendar = async (data) => {
   const date = data.date || new Date();
   const startDate =
     new Date(date.getFullYear(), date.getMonth(), date.getDate()) || new Date();
-  startDate?.setDate(startDate.getDate() - interval);
+  startDate?.setDate(startDate.getDate());
 
   const count = Math.floor(period / interval);
 
