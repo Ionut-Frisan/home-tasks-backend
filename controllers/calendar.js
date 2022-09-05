@@ -1,50 +1,53 @@
-const asyncHandler = require('../middleware/asyncHandler');
-const Day = require('../models/day');
-const Task = require('../models/tasks');
+const asyncHandler = require("../middleware/asyncHandler");
+const Day = require("../models/day");
+const Task = require("../models/tasks");
 
 exports.getDays = asyncHandler(async (req, res, next) => {
   const days = await Day.findAll({
-    include: [{
-      association: Day.Tasks, include: Task.Comments
-    }]
+    include: [
+      {
+        association: Day.Tasks,
+        include: Task.Comments,
+      },
+    ],
   });
   if (days !== null) {
-    res.send(days)
-  } else res.status(400).send([])
-})
+    res.send(days);
+  } else res.status(400).send([]);
+});
 
 exports.getDay = asyncHandler(async (req, res, next) => {
   const requiredId = req.params.id;
-  const day = await Day.findOne({where: {id: requiredId}});
+  const day = await Day.findOne({ where: { id: requiredId } });
   if (day !== null) res.send(day);
-  else res.status(400).send({})
-})
+  else res.status(400).send({});
+});
 
 exports.generateCalendar = asyncHandler(async (req, res, next) => {
-  await Day.destroy({where: {}, truncate: true, cascade: true});
+  await Day.destroy({ where: {}, truncate: true, cascade: true });
 
   const calendar = await getCalendar(req.body);
 
-  const calendarDb = Day.bulkCreate(calendar, {include: Day.Tasks});
+  const calendarDb = Day.bulkCreate(calendar, { include: Day.Tasks });
 
-  res.send()
-
-})
+  res.send();
+});
 
 const getTasks = async () => {
-  const tasks = await Task.findAll({include: Task.Comments});
-  return tasks.map((task) => {
-    task = task.toJSON();
-    delete task['id'];
-    delete task['dayId'];
-    task['comments'] = [];
-    task.displayInFE = false;
-    return task;
-  }) || [];
-}
+  const tasks = await Task.findAll({ include: Task.Comments });
+  return (
+    tasks.map((task) => {
+      task = task.toJSON();
+      delete task["id"];
+      delete task["dayId"];
+      task["comments"] = [];
+      task.displayInFE = false;
+      return task;
+    }) || []
+  );
+};
 
 const getCalendar = async (data) => {
-
   const persons = data.persons;
   const interval = data?.interval || 3;
   const period = data?.period || 90;
@@ -52,24 +55,29 @@ const getCalendar = async (data) => {
   let tasks = await getTasks();
   // console.log(tasks);
   const date = data.date || new Date();
-  const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate()) || new Date();
+  const startDate =
+    new Date(date.getFullYear(), date.getMonth(), date.getDate()) || new Date();
   startDate?.setDate(startDate.getDate() - interval);
 
-  const count = Math.floor(period/interval);
+  const count = Math.floor(period / interval);
 
-  let computedPersons = []
-  for(let i=0; i <= count; i++){
-    computedPersons = [...computedPersons, ...persons]
+  let computedPersons = [];
+  for (let i = 0; i <= count; i++) {
+    computedPersons = [...computedPersons, ...persons];
   }
 
   let calendar = [];
 
-  for(let i= 0; i < count; i++){
-   calendar.push({date: new Date(startDate.setDate(startDate.getDate() + interval)), person: computedPersons[i], tasks: tasks})
+  for (let i = 0; i < count; i++) {
+    calendar.push({
+      date: new Date(startDate.setDate(startDate.getDate() + interval)),
+      person: computedPersons[i],
+      tasks: tasks,
+    });
   }
 
   return calendar;
-}
+};
 
 // export const generateCalendar = asyncHandler(async (req, res, next) => {
 //   db.read();
