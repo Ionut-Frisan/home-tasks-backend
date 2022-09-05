@@ -1,4 +1,5 @@
 const asyncHandler = require("../middleware/asyncHandler");
+const {Op} = require("sequelize");
 const Day = require("../models/day");
 const Task = require("../models/tasks");
 
@@ -10,6 +11,9 @@ exports.getDays = asyncHandler(async (req, res, next) => {
         include: Task.Comments,
       },
     ],
+    order: [
+      ['date', 'ASC']
+    ]
   });
   if (days !== null) {
     res.send(days);
@@ -18,23 +22,30 @@ exports.getDays = asyncHandler(async (req, res, next) => {
 
 exports.getDay = asyncHandler(async (req, res, next) => {
   const requiredId = req.params.id;
-  const day = await Day.findOne({ where: { id: requiredId } });
+  const day = await Day.findOne({where: {id: requiredId}});
   if (day !== null) res.send(day);
   else res.status(400).send({});
 });
 
 exports.generateCalendar = asyncHandler(async (req, res, next) => {
-  await Day.destroy({ where: {}, truncate: true, cascade: true });
-
+  await Day.destroy({where: {}, cascade: true});
+  await Task.destroy({
+    where: {
+      [Op.and]: {
+        dayId: null,
+        displayInFE: false,
+      }
+    }
+  })
   const calendar = await getCalendar(req.body);
 
-  const calendarDb = Day.bulkCreate(calendar, { include: Day.Tasks });
+  const calendarDb = Day.bulkCreate(calendar, {include: Day.Tasks});
 
-  res.send();
+  res.send(calendarDb);
 });
 
 const getTasks = async () => {
-  const tasks = await Task.findAll({ include: Task.Comments });
+  const tasks = await Task.findAll({include: Task.Comments});
   return (
     tasks.map((task) => {
       task = task.toJSON();
